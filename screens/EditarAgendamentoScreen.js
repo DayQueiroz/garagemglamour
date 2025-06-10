@@ -1,14 +1,12 @@
-import React, { useState } from "react";
-import { View, TextInput, Button, Text, StyleSheet, Alert } from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+import React, { useEffect, useState } from "react";
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
-import { useColorScheme } from "react-native";
-import { TouchableOpacity } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
+export default function EditarAgendamentoScreen({ route, navigation }) {
+    const { id } = route.params;
 
-export default function NovoAgendamentoScreen({ navigation }) {
-    const tema = useColorScheme();
     const [cliente, setCliente] = useState("");
     const [profissional, setProfissional] = useState("");
     const [servico, setServico] = useState("");
@@ -16,15 +14,34 @@ export default function NovoAgendamentoScreen({ navigation }) {
     const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
     const [modo, setModo] = useState("date");
 
+    useEffect(() => {
+        const carregarAgendamento = async () => {
+            const ref = doc(db, "agendamentos", id);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const agendamento = snap.data();
+                setCliente(agendamento.cliente || "");
+                setProfissional(agendamento.profissional || "");
+                setServico(agendamento.servico || "");
 
-    const salvarAgendamento = async () => {
+                const [dia, mes, ano] = agendamento.data.split("/");
+                const [hora, minuto] = agendamento.hora.split(":");
+                const dataCompleta = new Date(`${ano}-${mes}-${dia}T${hora}:${minuto}`);
+                setData(dataCompleta);
+            }
+        };
+
+        carregarAgendamento();
+    }, [id]);
+
+    const salvarEdicao = async () => {
         if (!cliente || !profissional || !servico) {
             Alert.alert("Preencha todos os campos!");
             return;
         }
 
         try {
-            await addDoc(collection(db, "agendamentos"), {
+            await updateDoc(doc(db, "agendamentos", id), {
                 cliente,
                 profissional,
                 servico,
@@ -32,21 +49,34 @@ export default function NovoAgendamentoScreen({ navigation }) {
                 hora: data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
             });
 
-            Alert.alert("Sucesso", "Agendamento criado com sucesso!");
+            Alert.alert("Sucesso", "Agendamento atualizado!");
             navigation.goBack();
         } catch (error) {
             Alert.alert("Erro", error.message);
         }
     };
 
-    
-
+    const excluirAgendamento = async () => {
+        Alert.alert("Confirmação", "Deseja excluir este agendamento?", [
+            { text: "Cancelar", style: "cancel" },
+            {
+                text: "Excluir",
+                style: "destructive",
+                onPress: async () => {
+                    await deleteDoc(doc(db, "agendamentos", id));
+                    Alert.alert("Excluído com sucesso!");
+                    navigation.goBack();
+                }
+            }
+        ]);
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.titulo}>Novo Agendamento</Text>
+            <Text style={styles.titulo}>Editar Agendamento</Text>
+
             <TextInput
-                placeholder="Nome do Cliente"
+                placeholder="Cliente"
                 value={cliente}
                 onChangeText={setCliente}
                 style={styles.input}
@@ -72,17 +102,21 @@ export default function NovoAgendamentoScreen({ navigation }) {
                 <Text style={styles.textoBotao}>Selecionar Hora</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.botao} onPress={salvarAgendamento}>
-                <Text style={styles.textoBotao}>Salvar Agendamento</Text>
+            <Text style={styles.info}>
+                {`Data: ${data.toLocaleDateString()} - Hora: ${data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+            </Text>
+
+            <TouchableOpacity style={styles.botao} onPress={salvarEdicao}>
+                <Text style={styles.textoBotao}>Salvar</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity style={[styles.botao, { backgroundColor: "#F44336" }]} onPress={excluirAgendamento}>
+                <Text style={styles.textoBotao}>Excluir</Text>
+            </TouchableOpacity>
 
-            <Text style={styles.info}>
-                {`Data: ${data.toLocaleDateString()} - Hora: ${data.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                })}`}
-            </Text>
+            <TouchableOpacity style={[styles.botao, { backgroundColor: "#888" }]} onPress={() => navigation.goBack()}>
+                <Text style={styles.textoBotao}>Cancelar</Text>
+            </TouchableOpacity>
 
             <DateTimePickerModal
                 isVisible={mostrarDatePicker}
@@ -91,31 +125,18 @@ export default function NovoAgendamentoScreen({ navigation }) {
                 locale="pt-BR"
                 is24Hour={true}
                 display="default"
-                buttonTextColorIOS="#007AFF"
-                pickerStyleIOS={{
-                    backgroundColor: "#fff",
-                }}
-                onConfirm={(valorSelecionado) => {
+                onConfirm={(nova) => {
                     setMostrarDatePicker(false);
                     const novaData = new Date(data);
                     if (modo === "date") {
-                        novaData.setFullYear(
-                            valorSelecionado.getFullYear(),
-                            valorSelecionado.getMonth(),
-                            valorSelecionado.getDate()
-                        );
+                        novaData.setFullYear(nova.getFullYear(), nova.getMonth(), nova.getDate());
                     } else {
-                        novaData.setHours(valorSelecionado.getHours(), valorSelecionado.getMinutes());
+                        novaData.setHours(nova.getHours(), nova.getMinutes());
                     }
                     setData(novaData);
                 }}
                 onCancel={() => setMostrarDatePicker(false)}
             />
-
-
-
-
-           
         </View>
     );
 }
@@ -140,18 +161,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         fontSize: 16,
         borderColor: "#ccc",
-        borderWidth: 1,
-        elevation: 1,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2
-    },
-    info: {
-        fontSize: 16,
-        textAlign: "center",
-        marginVertical: 12,
-        color: "#444"
+        borderWidth: 1
     },
     botao: {
         backgroundColor: "#4E73DF",
@@ -164,6 +174,11 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "bold"
+    },
+    info: {
+        fontSize: 16,
+        textAlign: "center",
+        marginVertical: 12,
+        color: "#444"
     }
 });
-

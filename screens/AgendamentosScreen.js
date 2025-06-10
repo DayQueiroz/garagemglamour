@@ -3,8 +3,11 @@ import { View, Text, StyleSheet, FlatList } from "react-native";
 import { db } from "../firebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
 import { Calendar } from "react-native-calendars";
+import { TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; // ícone de "+"
 
-export default function AgendamentosScreen() {
+
+export default function AgendamentosScreen({ navigation }) {
   const [agendamentos, setAgendamentos] = useState([]);
   const [dataSelecionada, setDataSelecionada] = useState(null);
   const [datasMarcadas, setDatasMarcadas] = useState({});
@@ -83,15 +86,25 @@ export default function AgendamentosScreen() {
         data={agendamentosDoDia}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.texto}>Cliente: {item.cliente}</Text>
-            <Text style={styles.texto}>Serviço: {item.servico}</Text>
-            <Text style={styles.texto}>Profissional: {item.profissional}</Text>
-            <Text style={styles.texto}>Hora: {item.hora}</Text>
-          </View>
+          <TouchableOpacity onPress={() => navigation.navigate("EditarAgendamento", { id: item.id })}>
+            <View style={styles.card}>
+              <Text style={styles.texto}>Cliente: {item.cliente}</Text>
+              <Text style={styles.texto}>Serviço: {item.servico}</Text>
+              <Text style={styles.texto}>Profissional: {item.profissional}</Text>
+              <Text style={styles.texto}>Hora: {item.hora}</Text>
+            </View>
+          </TouchableOpacity>
         )}
+
         ListEmptyComponent={<Text style={styles.texto}>Nenhum agendamento</Text>}
       />
+      <TouchableOpacity
+        style={styles.botaoFlutuante}
+        onPress={() => navigation.navigate("NovoAgendamento")}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+
     </View>
   );
 }
@@ -118,5 +131,22 @@ const styles = StyleSheet.create({
   },
   texto: {
     color: "#000"
+  },
+  botaoFlutuante: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#4E73DF",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5
   }
+
 });
