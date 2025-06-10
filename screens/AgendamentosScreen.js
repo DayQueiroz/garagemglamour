@@ -36,11 +36,15 @@ export default function AgendamentosScreen() {
 
   const agendamentosDoDia = dataSelecionada
     ? agendamentos.filter((ag) => {
-      const [dia, mes, ano] = ag.data.split("/");
+      if (!ag.data) return false; // segurança contra undefined
+      const partes = ag.data.split("/");
+      if (partes.length !== 3) return false; // segurança contra dados mal formatados
+      const [dia, mes, ano] = partes;
       const dataAgendamento = `${ano}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
       return dataAgendamento === dataSelecionada;
     })
     : [];
+
 
 
   const formatarParaBR = (dataISO) => {
