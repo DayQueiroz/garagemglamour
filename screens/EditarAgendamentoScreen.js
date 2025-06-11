@@ -6,7 +6,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Linking } from 'react-native';
 import CabecalhoComLogo from "../components/CabecalhoComLogo"
 import { cores } from "../theme";
-import { ScrollView } from "react-native";
+import { KeyboardAvoidingView, ScrollView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
 
 
 
@@ -30,6 +30,8 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
                 setCliente(agendamento.cliente || "");
                 setProfissional(agendamento.profissional || "");
                 setServico(agendamento.servico || "");
+                setNumeroTelefone(agendamento.telefone || "");
+
 
                 const [dia, mes, ano] = agendamento.data.split("/");
                 const [hora, minuto] = agendamento.hora.split(":");
@@ -52,6 +54,7 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
                 cliente,
                 profissional,
                 servico,
+                telefone: numeroTelefone,
                 data: data.toLocaleDateString(),
                 hora: data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
             });
@@ -95,93 +98,104 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <CabecalhoComLogo />
-            <Text style={styles.titulo}>Editar Agendamento</Text>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1, padding: 16 }}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={{ flex: 1 }}>
+                        <CabecalhoComLogo />
+                        <Text style={styles.titulo}>Editar Agendamento</Text>
 
-            <TextInput
-                placeholder="Cliente"
-                value={cliente}
-                onChangeText={setCliente}
-                style={styles.input}
-            />
-            <TextInput
-                placeholder="Profissional"
-                value={profissional}
-                onChangeText={setProfissional}
-                style={styles.input}
-            />
-            <TextInput
-                placeholder="Serviço"
-                value={servico}
-                onChangeText={setServico}
-                style={styles.input}
-            />
-            <TextInput
-                placeholder="Telefone do Cliente (com DDD)"
-                value={numeroTelefone}
-                onChangeText={setNumeroTelefone}
-                style={styles.input}
-            />
+                        <TextInput
+                            placeholder="Cliente"
+                            value={cliente}
+                            onChangeText={setCliente}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Profissional"
+                            value={profissional}
+                            onChangeText={setProfissional}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Serviço"
+                            value={servico}
+                            onChangeText={setServico}
+                            style={styles.input}
+                        />
+                        <TextInput
+                            placeholder="Telefone do Cliente (com DDD)"
+                            value={numeroTelefone}
+                            onChangeText={setNumeroTelefone}
+                            style={styles.input}
+                        />
 
+                        <TouchableOpacity style={styles.botao} onPress={() => { setModo("date"); setMostrarDatePicker(true); }}>
+                            <Text style={styles.textoBotao}>Selecionar Data</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity style={styles.botao} onPress={() => { setModo("date"); setMostrarDatePicker(true); }}>
-                <Text style={styles.textoBotao}>Selecionar Data</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity style={styles.botao} onPress={() => { setModo("time"); setMostrarDatePicker(true); }}>
+                            <Text style={styles.textoBotao}>Selecionar Hora</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity style={styles.botao} onPress={() => { setModo("time"); setMostrarDatePicker(true); }}>
-                <Text style={styles.textoBotao}>Selecionar Hora</Text>
-            </TouchableOpacity>
+                        <Text style={styles.info}>
+                            {`Data: ${data.toLocaleDateString()} - Hora: ${data.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit"
+                            })}`}
+                        </Text>
 
-            <Text style={styles.info}>
-                {`Data: ${data.toLocaleDateString()} - Hora: ${data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-            </Text>
+                        <TouchableOpacity style={styles.botao} onPress={salvarEdicao}>
+                            <Text style={styles.textoBotao}>Salvar</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity style={styles.botao} onPress={salvarEdicao}>
-                <Text style={styles.textoBotao}>Salvar</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity style={[styles.botao, { backgroundColor: "#F44336" }]} onPress={excluirAgendamento}>
+                            <Text style={styles.textoBotao}>Excluir</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.botao, { backgroundColor: "#F44336" }]} onPress={excluirAgendamento}>
-                <Text style={styles.textoBotao}>Excluir</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity style={[styles.botao, { backgroundColor: "#888" }]} onPress={() => navigation.goBack()}>
+                            <Text style={styles.textoBotao}>Cancelar</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.botao, { backgroundColor: "#888" }]} onPress={() => navigation.goBack()}>
-                <Text style={styles.textoBotao}>Cancelar</Text>
-            </TouchableOpacity>
+                        <TouchableOpacity style={[styles.botao, { backgroundColor: "#25D366" }]} onPress={enviarWhatsApp}>
+                            <Text style={styles.textoBotao}>Confirmar por WhatsApp</Text>
+                        </TouchableOpacity>
 
-            <TouchableOpacity
-                style={[styles.botao, { backgroundColor: "#25D366" }]}
-                onPress={enviarWhatsApp}
-            >
-                <Text style={styles.textoBotao}>Confirmar por WhatsApp</Text>
-            </TouchableOpacity>
-
-            <DateTimePickerModal
-                isVisible={mostrarDatePicker}
-                mode={modo}
-                date={data}
-                locale="pt-BR"
-                is24Hour={true}
-                display="default"
-                onConfirm={(nova) => {
-                    setMostrarDatePicker(false);
-                    const novaData = new Date(data);
-                    if (modo === "date") {
-                        novaData.setFullYear(nova.getFullYear(), nova.getMonth(), nova.getDate());
-                    } else {
-                        novaData.setHours(nova.getHours(), nova.getMinutes());
-                    }
-                    setData(novaData);
-                }}
-                onCancel={() => setMostrarDatePicker(false)}
-            />
-        </ScrollView>
+                        <DateTimePickerModal
+                            isVisible={mostrarDatePicker}
+                            mode={modo}
+                            date={data}
+                            locale="pt-BR"
+                            is24Hour={true}
+                            display="default"
+                            onConfirm={(nova) => {
+                                setMostrarDatePicker(false);
+                                const novaData = new Date(data);
+                                if (modo === "date") {
+                                    novaData.setFullYear(nova.getFullYear(), nova.getMonth(), nova.getDate());
+                                } else {
+                                    novaData.setHours(nova.getHours(), nova.getMinutes());
+                                }
+                                setData(novaData);
+                            }}
+                            onCancel={() => setMostrarDatePicker(false)}
+                        />
+                    </View>
+                </ScrollView>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
+
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         backgroundColor: cores.fundo,
         padding: 16
     },
@@ -193,7 +207,7 @@ const styles = StyleSheet.create({
         color: cores.primario
     },
     titulo: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: "bold",
         textAlign: "center",
         marginBottom: 24,

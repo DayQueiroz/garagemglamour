@@ -24,7 +24,7 @@ export default function NovoAgendamentoScreen({ navigation }) {
 
 
     const salvarAgendamento = async () => {
-        if (!cliente || !profissional || !servico) {
+        if (!cliente || !profissional || !servico || !numeroTelefone) {
             Alert.alert("Preencha todos os campos!");
             return;
         }
@@ -34,6 +34,7 @@ export default function NovoAgendamentoScreen({ navigation }) {
                 cliente,
                 profissional,
                 servico,
+                telefone: numeroTelefone,
                 data: data.toLocaleDateString(),
                 hora: data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
             });

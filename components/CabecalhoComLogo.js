@@ -22,5 +22,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 180,
     height: 100
+
   }
 });
