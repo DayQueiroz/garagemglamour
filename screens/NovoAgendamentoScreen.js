@@ -5,6 +5,10 @@ import { db } from "../firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import { useColorScheme } from "react-native";
 import { TouchableOpacity } from "react-native";
+import { Linking } from 'react-native';
+import CabecalhoComLogo from "../components/CabecalhoComLogo";
+import { cores } from "../theme";
+
 
 
 export default function NovoAgendamentoScreen({ navigation }) {
@@ -15,6 +19,8 @@ export default function NovoAgendamentoScreen({ navigation }) {
     const [data, setData] = useState(new Date());
     const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
     const [modo, setModo] = useState("date");
+    const [numeroTelefone, setNumeroTelefone] = useState("");
+
 
 
     const salvarAgendamento = async () => {
@@ -38,12 +44,26 @@ export default function NovoAgendamentoScreen({ navigation }) {
             Alert.alert("Erro", error.message);
         }
     };
+    const enviarWhatsApp = () => {
+        if (!numeroTelefone || !cliente || !profissional || !servico) {
+            Alert.alert("Atenção", "Preencha todos os campos e o número do cliente.");
+            return;
+        }
 
-    
+        const numero = "55" + numeroTelefone.replace(/\D/g, "");
+        const mensagem = `Olá ${cliente}, seu agendamento para ${servico} com ${profissional} está confirmado para ${data.toLocaleDateString()} às ${data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`;
+
+        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+
+        Linking.openURL(url).catch(() =>
+            Alert.alert("Erro", "Não foi possível abrir o WhatsApp")
+        );
+    };
 
 
     return (
         <View style={styles.container}>
+            <CabecalhoComLogo />
             <Text style={styles.titulo}>Novo Agendamento</Text>
             <TextInput
                 placeholder="Nome do Cliente"
@@ -63,6 +83,13 @@ export default function NovoAgendamentoScreen({ navigation }) {
                 onChangeText={setServico}
                 style={styles.input}
             />
+            <TextInput
+                placeholder="Telefone do Cliente (com DDD)"
+                value={numeroTelefone}
+                onChangeText={setNumeroTelefone}
+                style={styles.input}
+            />
+
 
             <TouchableOpacity style={styles.botao} onPress={() => { setModo("date"); setMostrarDatePicker(true); }}>
                 <Text style={styles.textoBotao}>Selecionar Data</Text>
@@ -75,6 +102,14 @@ export default function NovoAgendamentoScreen({ navigation }) {
             <TouchableOpacity style={styles.botao} onPress={salvarAgendamento}>
                 <Text style={styles.textoBotao}>Salvar Agendamento</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.botao, { backgroundColor: "#25D366" }]}
+                onPress={enviarWhatsApp}
+            >
+                <Text style={styles.textoBotao}>Confirmar por WhatsApp</Text>
+            </TouchableOpacity>
+
 
 
             <Text style={styles.info}>
@@ -115,7 +150,7 @@ export default function NovoAgendamentoScreen({ navigation }) {
 
 
 
-           
+
         </View>
     );
 }
@@ -123,8 +158,8 @@ export default function NovoAgendamentoScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f2f2f2",
-        padding: 20
+        backgroundColor: cores.fundo,
+        padding: 16
     },
     titulo: {
         fontSize: 24,
@@ -132,6 +167,26 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 24,
         color: "#333"
+    },
+    tituloLista: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginVertical: 12,
+        textAlign: "center",
+        color: cores.primario
+    },
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: cores.cinzaClaro,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3
     },
     input: {
         backgroundColor: "#fff",
@@ -154,7 +209,7 @@ const styles = StyleSheet.create({
         color: "#444"
     },
     botao: {
-        backgroundColor: "#4E73DF",
+        backgroundColor: cores.primario,
         padding: 14,
         borderRadius: 8,
         alignItems: "center",
@@ -164,6 +219,9 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "bold"
+    },
+    texto: {
+        color: cores.texto
     }
 });
 

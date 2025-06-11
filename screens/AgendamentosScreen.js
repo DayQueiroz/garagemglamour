@@ -5,6 +5,8 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { Calendar } from "react-native-calendars";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // ícone de "+"
+import CabecalhoComLogo from "../components/CabecalhoComLogo";
+import { cores } from "../theme";
 
 
 export default function AgendamentosScreen({ navigation }) {
@@ -57,6 +59,8 @@ export default function AgendamentosScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <CabecalhoComLogo />
+
       <Calendar
         onDayPress={dia => setDataSelecionada(dia.dateString)}
         markedDates={{
@@ -113,24 +117,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff"
+    backgroundColor: cores.fundo
   },
   tituloLista: {
     fontSize: 18,
     fontWeight: "bold",
     marginVertical: 12,
-    textAlign: "center"
+    textAlign: "center",
+    color: cores.primario
   },
   card: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#ddd"
+    borderColor: cores.cinzaClaro,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3
   },
   texto: {
-    color: "#000"
+    color: cores.texto
   },
   botaoFlutuante: {
     position: "absolute",
@@ -147,6 +157,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.5
+  },
+  botao: {
+    backgroundColor: cores.primario,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12
+  },
+  textoBotao: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold"
   }
 
 });

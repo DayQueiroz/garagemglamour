@@ -3,16 +3,23 @@ import { View, TextInput, Text, StyleSheet, TouchableOpacity, Alert } from "reac
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { Linking } from 'react-native';
+import CabecalhoComLogo from "../components/CabecalhoComLogo"
+import { cores } from "../theme";
+import { ScrollView } from "react-native";
+
+
 
 export default function EditarAgendamentoScreen({ route, navigation }) {
     const { id } = route.params;
-
     const [cliente, setCliente] = useState("");
     const [profissional, setProfissional] = useState("");
     const [servico, setServico] = useState("");
     const [data, setData] = useState(new Date());
     const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
     const [modo, setModo] = useState("date");
+    const [numeroTelefone, setNumeroTelefone] = useState("");
+
 
     useEffect(() => {
         const carregarAgendamento = async () => {
@@ -71,8 +78,25 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
         ]);
     };
 
+    const enviarWhatsApp = () => {
+        if (!numeroTelefone) {
+            Alert.alert("Atenção", "Informe o número de telefone do cliente.");
+            return;
+        }
+
+        const numero = "55" + numeroTelefone.replace(/\D/g, ""); // remove traços, parênteses etc.
+        const mensagem = `Olá ${cliente}, seu agendamento para ${servico} com ${profissional} está confirmado para ${data.toLocaleDateString()} às ${data.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`;
+
+        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+
+        Linking.openURL(url).catch(() =>
+            Alert.alert("Erro", "Não foi possível abrir o WhatsApp")
+        );
+    };
+
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
+            <CabecalhoComLogo />
             <Text style={styles.titulo}>Editar Agendamento</Text>
 
             <TextInput
@@ -93,6 +117,13 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
                 onChangeText={setServico}
                 style={styles.input}
             />
+            <TextInput
+                placeholder="Telefone do Cliente (com DDD)"
+                value={numeroTelefone}
+                onChangeText={setNumeroTelefone}
+                style={styles.input}
+            />
+
 
             <TouchableOpacity style={styles.botao} onPress={() => { setModo("date"); setMostrarDatePicker(true); }}>
                 <Text style={styles.textoBotao}>Selecionar Data</Text>
@@ -118,6 +149,13 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
                 <Text style={styles.textoBotao}>Cancelar</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+                style={[styles.botao, { backgroundColor: "#25D366" }]}
+                onPress={enviarWhatsApp}
+            >
+                <Text style={styles.textoBotao}>Confirmar por WhatsApp</Text>
+            </TouchableOpacity>
+
             <DateTimePickerModal
                 isVisible={mostrarDatePicker}
                 mode={modo}
@@ -137,15 +175,22 @@ export default function EditarAgendamentoScreen({ route, navigation }) {
                 }}
                 onCancel={() => setMostrarDatePicker(false)}
             />
-        </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f2f2f2",
-        padding: 20
+        backgroundColor: cores.fundo,
+        padding: 16
+    },
+    tituloLista: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginVertical: 12,
+        textAlign: "center",
+        color: cores.primario
     },
     titulo: {
         fontSize: 24,
@@ -153,6 +198,19 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 24,
         color: "#333"
+    },
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: cores.cinzaClaro,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 3
     },
     input: {
         backgroundColor: "#fff",
@@ -164,7 +222,7 @@ const styles = StyleSheet.create({
         borderWidth: 1
     },
     botao: {
-        backgroundColor: "#4E73DF",
+        backgroundColor: cores.primario,
         padding: 14,
         borderRadius: 8,
         alignItems: "center",
@@ -180,5 +238,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginVertical: 12,
         color: "#444"
+    },
+    texto: {
+        color: cores.texto
     }
 });
