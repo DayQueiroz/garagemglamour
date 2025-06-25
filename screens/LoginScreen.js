@@ -1,24 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, TextInput, Button, Text, StyleSheet } from "react-native";
 import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import CabecalhoComLogo from "../components/CabecalhoComLogo";
 import { cores } from "../theme";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Switch } from 'react-native';
 
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [salvarLogin, setSalvarLogin] = useState(false);
 
   const fazerLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, senha);
-      navigation.replace("Agendamentos");
-    } catch (err) {
-      setErro("Erro: " + err.message);
+      if (salvarLogin) {
+        await AsyncStorage.setItem("email", email);
+        await AsyncStorage.setItem("senha", senha);
+      } else {
+        await AsyncStorage.removeItem("email");
+        await AsyncStorage.removeItem("senha");
+      }
+      navigation.navigate("Agendamentos");
+    } catch (erro) {
+      Alert.alert("Erro", "Verifique seus dados");
     }
   };
+
+
+  useEffect(() => {
+    const carregarLoginSalvo = async () => {
+      const emailSalvo = await AsyncStorage.getItem("email");
+      const senhaSalva = await AsyncStorage.getItem("senha");
+      if (emailSalvo && senhaSalva) {
+        setEmail(emailSalvo);
+        setSenha(senhaSalva);
+        setSalvarLogin(true);
+      }
+    };
+    carregarLoginSalvo();
+  }, []);
+
 
   return (
     <View style={styles.container}>
@@ -36,9 +61,16 @@ export default function LoginScreen({ navigation }) {
         style={styles.input}
         secureTextEntry
       />
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+        <Switch value={salvarLogin} onValueChange={setSalvarLogin} />
+        <Text style={{ marginLeft: 8 }}>Salvar login</Text>
+      </View>
+
       {erro ? <Text style={styles.erro}>{erro}</Text> : null}
       <Button title="Entrar" onPress={fazerLogin} />
     </View>
+
+
   );
 }
 

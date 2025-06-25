@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, TextInput, Button, Text, StyleSheet, Alert } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { useColorScheme } from "react-native";
 import { TouchableOpacity } from "react-native";
 import { Linking } from 'react-native';
 import CabecalhoComLogo from "../components/CabecalhoComLogo";
 import { cores } from "../theme";
+import Autocomplete from "react-native-autocomplete-input";
 
 
 
@@ -20,7 +21,19 @@ export default function NovoAgendamentoScreen({ navigation }) {
     const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
     const [modo, setModo] = useState("date");
     const [numeroTelefone, setNumeroTelefone] = useState("");
+    const [clientes, setClientes] = useState([]);
 
+    useEffect(() => {
+        const unsubscribe = onSnapshot(collection(db, "clientes"), (snapshot) => {
+            const lista = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setClientes(lista);
+        });
+
+        return () => unsubscribe();
+    }, [])
 
 
     const salvarAgendamento = async () => {
@@ -66,12 +79,43 @@ export default function NovoAgendamentoScreen({ navigation }) {
         <View style={styles.container}>
             <CabecalhoComLogo />
             <Text style={styles.titulo}>Novo Agendamento</Text>
-            <TextInput
-                placeholder="Nome do Cliente"
-                value={cliente}
+
+            <Text style={{ marginBottom: 8, fontWeight: "bold", color: "#555" }}>
+                Cliente
+            </Text>
+
+            <Autocomplete
+                data={
+                    cliente.length > 0
+                        ? clientes.filter((item) =>
+                            item.nome.toLowerCase().includes(cliente.toLowerCase())
+                        )
+                        : []
+                }
+                defaultValue={cliente}
                 onChangeText={setCliente}
-                style={styles.input}
+                placeholder="Digite o nome da cliente"
+                containerStyle={styles.autocompleteContainer}
+                inputContainerStyle={styles.autocompleteInput}
+                listStyle={styles.autocompleteList}
+                flatListProps={{
+                    keyExtractor: (item) => item.id,
+                    renderItem: ({ item }) => (
+                        <TouchableOpacity
+                            onPress={() => {
+                                setCliente(item.nome);
+                                setNumeroTelefone(item.telefone); // ← já preenche o telefone também
+                                setClientes([]); // força a lista a sumir visualmente
+                            }}
+                        >
+                            <Text style={{ padding: 10 }}>{item.nome}</Text>
+                        </TouchableOpacity>
+                    ),
+                }}
             />
+
+
+
             <TextInput
                 placeholder="Profissional"
                 value={profissional}
@@ -223,6 +267,35 @@ const styles = StyleSheet.create({
     },
     texto: {
         color: cores.texto
+    },
+    autocompleteContainer: {
+        marginBottom: 16,
+        zIndex: 10, // garante que fique acima dos outros campos
+        position: "relative",
+    },
+
+    autocompleteInput: {
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: "#ccc",
+        height: 50,
+        justifyContent: "center",
+    },
+
+    autocompleteList: {
+        backgroundColor: "#fff",
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderBottomLeftRadius: 10,
+        borderBottomRightRadius: 10,
+        maxHeight: 150,
+        position: "absolute",
+        top: 50,
+        width: "100%",
+        zIndex: 20,
     }
 });
 
